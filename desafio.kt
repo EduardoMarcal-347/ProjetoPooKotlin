@@ -12,12 +12,13 @@ class Usuario(var nome: String?) {
 
 }
 
-data class ConteudoEducacional(var nome: String, val duracao: Int = 60)
+data class ConteudoEducacional(var nome: String, val duracao: Int = 60){
+    lateinit var nivel: Nivel
+}
 
 data class Formacao(val nome: String, var conteudos: List<ConteudoEducacional>) {
 
     val inscritos = mutableListOf<Usuario>()
-    lateinit var nivel: Nivel;
     
     fun matricular(usuario: Usuario) {
         inscritos.add(usuario).also { println("O usuario ${usuario.nome} foi matriculado") };
@@ -29,36 +30,65 @@ data class Formacao(val nome: String, var conteudos: List<ConteudoEducacional>) 
 
     fun finalizarConteudo(usuario: Usuario, conteudoEducacional: ConteudoEducacional){
         if(!usuario.conteudosFinalizados.contains(conteudoEducacional)) {
-            usuario.pontuacao += 50;
+            usuario.pontuacao += when(conteudoEducacional.nivel){
+                Nivel.BASICO -> 25;
+                Nivel.INTERMEDIARIO -> 50;
+                Nivel.DIFICIL -> 75;
+                else -> 0;
+            }
             usuario.conteudosFinalizados.add(conteudoEducacional);
         } else println("${conteudoEducacional.nome} já foi finalizado por ${usuario.nome}")
     }
 
     fun exibirMatriculados() {
-        println("Matriculados no curso ${this.nome}")
+        println("---Matriculados no curso ${this.nome}---")
         for (usuario in inscritos) {
             println(usuario.nome)
         }
     }
 
     fun exibirConteudos() {
-        println("Conteudos do curso ${this.nome}")
+        println("---Conteudos do curso ${this.nome}---")
         for (conteudo in conteudos){
             println("${conteudo.nome} duração: ${conteudo.duracao} minutos")
         }
     }
 
     fun exibirRankingUsuarios (){
-        inscritos.sortBy { usuario -> usuario.pontuacao};
+        println("---Ranking Pontuação Usuários---")
+        inscritos.sortedByDescending { it.pontuacao };
         for (index in inscritos.indices) {
-            println("#$index - ${inscritos.get(index).nome} - Pontuação: ${inscritos.get(index).pontuacao}")
+            println("#${index+1} - ${inscritos.get(index).nome} - Pontuação: ${inscritos.get(index).pontuacao}")
         }
     }
 
 }
 
 fun main() {
+    val usuario1 = Usuario("Eduardo");
+    val usuario2 = Usuario("Mateus");
+    val usuario3 = Usuario("Larissa")
+    val conteudo1 = ConteudoEducacional("java")
+    val conteudo2 = ConteudoEducacional("Kotlin")
+    val listaConteudos = mutableListOf<ConteudoEducacional>();
+    listaConteudos.add(conteudo2);
+    listaConteudos.add(conteudo1);
+    val formacao = Formacao("Dev BackEnd", listaConteudos);
+    conteudo1.nivel = Nivel.DIFICIL;
+    conteudo2.nivel = Nivel.INTERMEDIARIO;
 
-    
-    TODO("Simule alguns cenários de teste. Para isso, crie alguns objetos usando as classes em questão.")
+    formacao.matricular(usuario1);
+    formacao.matricular(usuario2);
+    formacao.matricular(usuario3);
+    formacao.exibirMatriculados();
+
+    formacao.finalizarConteudo(usuario1, formacao.conteudos.get(0));
+    formacao.finalizarConteudo(usuario1, formacao.conteudos.get(1));
+    formacao.finalizarConteudo(usuario2, formacao.conteudos.get(1));
+    formacao.exibirRankingUsuarios();
+
+    formacao.cancelarMatricula(usuario3);
+    formacao.exibirMatriculados()
+
+    formacao.exibirConteudos();
 }
